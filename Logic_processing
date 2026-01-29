@@ -1,0 +1,48 @@
+import streamlit as st
+
+# -----------------------------
+# Function that performs logic
+# -----------------------------
+def compute(a, operation, b):
+    if operation == "plus":
+        return a + b
+    elif operation == "minus":
+        return a - b
+    elif operation == "multiply":
+        return a * b
+    else:
+        return "Unsupported operation"
+
+
+# -----------------------------
+# Streamlit GUI
+# -----------------------------
+st.title("Text File Logic Calculator")
+
+st.write("Upload a .txt file with this format:")
+st.code("5 plus 3")
+
+uploaded_file = st.file_uploader("Choose a .txt file", type="txt")
+
+if uploaded_file is not None:
+    # Read file contents
+    content = uploaded_file.read().decode("utf-8").strip()
+
+    st.write("File content:")
+    st.code(content)
+
+    try:
+        # Split text into parts
+        parts = content.split()
+
+        a = int(parts[0])
+        operation = parts[1].lower()
+        b = int(parts[2])
+
+        # Perform calculation
+        result = compute(a, operation, b)
+
+        st.success(f"Result: {result}")
+
+    except Exception as e:
+        st.error("Invalid file format. Please use: number operation number")
