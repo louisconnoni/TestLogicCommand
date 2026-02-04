@@ -2,38 +2,40 @@ import streamlit as st
 import operator
 
 st.set_page_config(page_title="Custom Logic Interpreter", layout="centered")
-st.title("Custom Logic Interpreter")
+st.title("Custom Logic Interpreter (Debug Mode)")
 
 # -------------------------
-# Session state init
+# Session state
 # -------------------------
 if "run" not in st.session_state:
     st.session_state.run = False
 
 # -------------------------
-# File uploaders
+# UI
 # -------------------------
-data_file = st.file_uploader("Upload data file (.txt)", type="txt", key="data")
-logic_file = st.file_uploader("Upload logic file (.txt)", type="txt", key="logic")
+data_file = st.file_uploader("Upload data file (.txt)", type="txt")
+logic_file = st.file_uploader("Upload logic file (.txt)", type="txt")
 
 if st.button("Run Logic"):
     st.session_state.run = True
 
 # -------------------------
-# Parse data file
+# Parse data
 # -------------------------
 def parse_data(text):
     variables = {}
     for line in text.splitlines():
         line = line.strip()
-        if not line or "=" not in line:
+        if not line:
             continue
+        if "=" not in line:
+            raise ValueError(f"Invalid data line: {line}")
         var, val = line.split("=")
         variables[var.strip()] = int(val.strip())
     return variables
 
 # -------------------------
-# Parse logic into tree
+# Parse logic tree
 # -------------------------
 def parse_logic(lines):
     root = []
@@ -41,14 +43,14 @@ def parse_logic(lines):
 
     for raw_line in lines:
         indent = len(raw_line) - len(raw_line.lstrip())
-        line = raw_line.strip()
+        text = raw_line.strip()
 
-        if not line:
+        if not text:
             continue
 
         node = {
             "indent": indent,
-            "text": line,
+            "text": text,
             "children": []
         }
 
@@ -65,18 +67,33 @@ def parse_logic(lines):
     return root
 
 # -------------------------
-# Display logic tree
+# Identify logic type
 # -------------------------
-def display_logic(nodes, level=0):
-    for node in nodes:
-        st.text("  " * level + "- " + node["text"])
-        if node["children"]:
-            display_logic(node["children"], level + 1)
+OPS = ["==", ">=", "<=", ">", "<"]
+
+def classify_line(text):
+    if text.startswith("if "):
+        return "IF"
+    if text.startswith("else"):
+        return "ELSE"
+    if "=" in text:
+        return "ASSIGN"
+    return "UNKNOWN"
 
 # -------------------------
-# Condition evaluation
+# Display interpreted logic
 # -------------------------
-OPS = {
+def display_interpretation(nodes, level=0):
+    for node in nodes:
+        kind = classify_line(node["text"])
+        st.text("  " * level + f"- [{kind}] {node['text']}")
+        if node["children"]:
+            display_interpretation(node["children"], level + 1)
+
+# -------------------------
+# Evaluate condition
+# -------------------------
+OP_FUNCS = {
     "==": operator.eq,
     ">=": operator.ge,
     "<=": operator.le,
@@ -85,23 +102,23 @@ OPS = {
 }
 
 def evaluate_condition(condition, variables):
-    for symbol, func in OPS.items():
-        if symbol in condition:
-            left, right = condition.split(symbol)
+    for op in OP_FUNCS:
+        if op in condition:
+            left, right = condition.split(op)
             left = left.strip()
             right = int(right.strip())
-            return func(variables.get(left), right)
+            return OP_FUNCS[op](variables.get(left), right)
     raise ValueError(f"Invalid condition: {condition}")
 
 # -------------------------
-# Execute logic tree
+# Execute logic
 # -------------------------
 def execute(nodes, variables):
     for node in nodes:
         text = node["text"]
 
-        if text.startswith("if"):
-            condition = text[2:].strip()
+        if text.startswith("if "):
+            condition = text[3:].strip()
             if evaluate_condition(condition, variables):
                 execute(node["children"], variables)
                 return True
@@ -118,33 +135,30 @@ def execute(nodes, variables):
     return False
 
 # -------------------------
-# Run execution safely
+# Run
 # -------------------------
 if st.session_state.run:
-    if not data_file or not logic_file:
-        st.warning("Please upload BOTH a data file and a logic file.")
-    else:
-        try:
-            data_text = data_file.read().decode("utf-8")
-            logic_text = logic_file.read().decode("utf-8")
-
-            variables = parse_data(data_text)
-            logic_tree = parse_logic(logic_text.splitlines())
+    try:
+        if not data_file or not logic_file:
+            st.warning("Please upload both files.")
+        else:
+            variables = parse_data(data_file.read().decode("utf-8"))
+            logic_lines = logic_file.read().decode("utf-8").splitlines()
+            logic_tree = parse_logic(logic_lines)
 
             st.subheader("Parsed Variables")
             st.write(variables)
 
-            st.subheader("Parsed Logic Tree")
-            display_logic(logic_tree)
+            st.subheader("Interpreted Logic")
+            display_interpretation(logic_tree)
 
             execute(logic_tree, variables)
 
             st.subheader("Final Variables After Execution")
             st.success(variables)
 
-        except Exception as e:
-            st.error("An error occurred during execution")
-            st.code(str(e))
+    except Exception as e:
+        st.error("Error detected")
+        st.code(str(e))
 
-    # Reset run flag so it doesn't auto-run again
     st.session_state.run = False
