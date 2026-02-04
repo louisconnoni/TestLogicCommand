@@ -1,18 +1,23 @@
 import streamlit as st
 import operator
 
-# MUST be first Streamlit command
 st.set_page_config(page_title="Custom Logic Interpreter", layout="centered")
-
 st.title("Custom Logic Interpreter")
 
 # -------------------------
-# File uploaders (ALWAYS visible)
+# Session state init
 # -------------------------
-data_file = st.file_uploader("Upload data file (.txt)", type="txt")
-logic_file = st.file_uploader("Upload logic file (.txt)", type="txt")
+if "run" not in st.session_state:
+    st.session_state.run = False
 
-run_button = st.button("Run Logic")
+# -------------------------
+# File uploaders
+# -------------------------
+data_file = st.file_uploader("Upload data file (.txt)", type="txt", key="data")
+logic_file = st.file_uploader("Upload logic file (.txt)", type="txt", key="logic")
+
+if st.button("Run Logic"):
+    st.session_state.run = True
 
 # -------------------------
 # Parse data file
@@ -89,4 +94,31 @@ def evaluate_condition(condition, variables):
     raise ValueError(f"Invalid condition: {condition}")
 
 # -------------------------
-# Exec
+# Execute logic tree
+# -------------------------
+def execute(nodes, variables):
+    for node in nodes:
+        text = node["text"]
+
+        if text.startswith("if"):
+            condition = text[2:].strip()
+            if evaluate_condition(condition, variables):
+                execute(node["children"], variables)
+                return True
+
+        elif text.startswith("else"):
+            execute(node["children"], variables)
+            return True
+
+        elif "=" in text:
+            var, val = text.split("=")
+            variables[var.strip()] = int(val.strip())
+            return True
+
+    return False
+
+# -------------------------
+# Run execution safely
+# -------------------------
+if st.session_state.run:
+    if n
