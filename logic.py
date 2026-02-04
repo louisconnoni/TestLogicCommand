@@ -1,7 +1,8 @@
 import streamlit as st
+import operator
 
-st.set_page_config(page_title="Logic Debugger")
-st.title("Custom Logic Debugger")
+st.set_page_config(page_title="Custom Logic Interpreter")
+st.title("Custom Logic Interpreter")
 
 # -------------------------
 # Parse data file
@@ -49,7 +50,7 @@ def parse_logic(lines):
     return root
 
 # -------------------------
-# Pretty-print logic tree
+# Display logic tree
 # -------------------------
 def display_logic(nodes, level=0):
     for node in nodes:
@@ -58,26 +59,17 @@ def display_logic(nodes, level=0):
             display_logic(node["children"], level + 1)
 
 # -------------------------
-# Streamlit UI
+# Condition evaluation
 # -------------------------
-data_file = st.file_uploader("Upload data file (.txt)", type="txt")
-logic_file = st.file_uploader("Upload logic file (.txt)", type="txt")
+OPS = {
+    "==": operator.eq,
+    ">": operator.gt,
+    "<": operator.lt,
+    ">=": operator.ge,
+    "<=": operator.le,
+}
 
-if data_file and logic_file:
-    try:
-        data_text = data_file.read().decode("utf-8")
-        logic_text = logic_file.read().decode("utf-8")
-
-        variables = parse_data(data_text)
-        logic_lines = logic_text.splitlines()
-        logic_tree = parse_logic(logic_lines)
-
-        st.subheader("Parsed Variables")
-        st.write(variables)
-
-        st.subheader("Parsed Logic Tree")
-        display_logic(logic_tree)
-
-    except Exception as e:
-        st.error("Parsing error")
-        st.code(str(e))
+def evaluate_condition(text, variables):
+    for op_symbol, op_func in OPS.items():
+        if op_symbol in text:
+            left, right = text.spl
