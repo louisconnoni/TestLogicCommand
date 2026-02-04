@@ -1,50 +1,54 @@
-
 import streamlit as st
 
-# -----------------------------
-# Function that performs logic
-# -----------------------------
-def compute(a, operation, b):
-    if operation == "plus":
-        return a + b
-    elif operation == "minus":
-        return a - b
-    elif operation == "multiply":
-        return a * b
-    else:
-        return "Unsupported operation"
+st.set_page_config(page_title="Logic Executor", layout="centered")
 
+st.title("Logic Executor App")
+st.write(
+    "Upload a **data file** and a **logic file**. "
+    "The logic file can include nested for-loops and will be executed on the data."
+)
 
-# -----------------------------
-# Streamlit GUI
-# -----------------------------
-st.title("Text File Logic Calculator")
+# File uploaders
+data_file = st.file_uploader("Upload data file (.txt)", type="txt")
+logic_file = st.file_uploader("Upload logic file (.txt)", type="txt")
 
-st.write("Upload a .txt file with this format:")
-st.code("5 plus 3")
-
-uploaded_file = st.file_uploader("Choose a .txt file", type="txt")
-
-if uploaded_file is not None:
-    # Read file contents
-    content = uploaded_file.read().decode("utf-8").strip()
-
-    st.write("File content:")
-    st.code(content)
-
+if data_file and logic_file:
     try:
-        # Split text into parts
-        parts = content.split()
+        # --- Read and parse data file ---
+        data_text = data_file.read().decode("utf-8")
+        data = [int(x) for x in data_text.split()]
 
-        a = int(parts[0])
-        operation = parts[1].lower()
-        b = int(parts[2])
+        st.subheader("Parsed Data")
+        st.write(data)
 
-        # Perform calculation
-        result = compute(a, operation, b)
+        # --- Read logic file ---
+        logic_code = logic_file.read().decode("utf-8")
 
-        st.success(f"Result: {result}")
+        st.subheader("Logic Code")
+        st.code(logic_code, language="python")
+
+        # --- Execution environment ---
+        # Variables the logic file is allowed to access
+        local_vars = {
+            "data": data
+        }
+
+        # Execute logic
+        exec(logic_code, {}, local_vars)
+
+        # --- Display output ---
+        st.subheader("Result")
+        if "output" in local_vars:
+            st.success("Logic executed successfully!")
+            st.write(local_vars["output"])
+        else:
+            st.warning(
+                "Logic executed, but no variable named 'output' was found.\n\n"
+                "Make sure your logic file assigns a value to `output`."
+            )
 
     except Exception as e:
-        st.error("Invalid file format. Please use: number operation number")
+        st.error("An error occurred while executing the logic:")
+        st.code(str(e))
+
 
