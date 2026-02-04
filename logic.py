@@ -1,24 +1,26 @@
 import streamlit as st
 
-st.set_page_config(page_title="Custom Logic Interpreter")
-st.title("Custom Logic Interpreter")
+st.set_page_config(page_title="Logic Debugger")
+st.title("Custom Logic Debugger")
 
 # -------------------------
-# Data file parser
+# Parse data file
 # -------------------------
 def parse_data(text):
-    data = {}
+    variables = {}
     for line in text.splitlines():
-        if "=" in line:
-            var, val = line.split("=")
-            data[var.strip()] = int(val.strip())
-    return data
+        line = line.strip()
+        if not line or "=" not in line:
+            continue
+        var, val = line.split("=")
+        variables[var.strip()] = int(val.strip())
+    return variables
 
 # -------------------------
-# Logic parser
+# Parse logic into tree
 # -------------------------
 def parse_logic(lines):
-    parsed = []
+    root = []
     stack = []
 
     for raw_line in lines:
@@ -30,7 +32,7 @@ def parse_logic(lines):
 
         node = {
             "indent": indent,
-            "line": line,
+            "text": line,
             "children": []
         }
 
@@ -40,39 +42,20 @@ def parse_logic(lines):
         if stack:
             stack[-1]["children"].append(node)
         else:
-            parsed.append(node)
+            root.append(node)
 
         stack.append(node)
 
-    return parsed
+    return root
 
 # -------------------------
-# Logic executor
+# Pretty-print logic tree
 # -------------------------
-def evaluate(nodes, variables):
+def display_logic(nodes, level=0):
     for node in nodes:
-        line = node["line"]
-
-        if line.startswith("if"):
-            _, condition = line.split("if", 1)
-            var, val = condition.split("==")
-            var = var.strip()
-            val = int(val.strip())
-
-            if variables.get(var) == val:
-                evaluate(node["children"], variables)
-                return
-
-        elif line.startswith("else"):
-            _, var = line.split("else", 1)
-            var = var.strip()
-
-            evaluate(node["children"], variables)
-            return
-
-        elif "=" in line:
-            var, val = line.split("=")
-            variables[var.strip()] = int(val.strip())
+        st.text("  " * level + "- " + node["text"])
+        if node["children"]:
+            display_logic(node["children"], level + 1)
 
 # -------------------------
 # Streamlit UI
@@ -80,21 +63,4 @@ def evaluate(nodes, variables):
 data_file = st.file_uploader("Upload data file (.txt)", type="txt")
 logic_file = st.file_uploader("Upload logic file (.txt)", type="txt")
 
-if data_file and logic_file:
-    try:
-        data_text = data_file.read().decode("utf-8")
-        logic_text = logic_file.read().decode("utf-8")
-
-        variables = parse_data(data_text)
-        logic_lines = logic_text.splitlines()
-
-        parsed_logic = parse_logic(logic_lines)
-        evaluate(parsed_logic, variables)
-
-        st.subheader("Final Variables")
-        st.write(variables)
-
-    except Exception as e:
-        st.error("Execution error")
-        st.code(str(e))
-
+if data_file_
