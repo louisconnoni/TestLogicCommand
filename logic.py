@@ -121,4 +121,30 @@ def execute(nodes, variables):
 # Run execution safely
 # -------------------------
 if st.session_state.run:
-    if n
+    if not data_file or not logic_file:
+        st.warning("Please upload BOTH a data file and a logic file.")
+    else:
+        try:
+            data_text = data_file.read().decode("utf-8")
+            logic_text = logic_file.read().decode("utf-8")
+
+            variables = parse_data(data_text)
+            logic_tree = parse_logic(logic_text.splitlines())
+
+            st.subheader("Parsed Variables")
+            st.write(variables)
+
+            st.subheader("Parsed Logic Tree")
+            display_logic(logic_tree)
+
+            execute(logic_tree, variables)
+
+            st.subheader("Final Variables After Execution")
+            st.success(variables)
+
+        except Exception as e:
+            st.error("An error occurred during execution")
+            st.code(str(e))
+
+    # Reset run flag so it doesn't auto-run again
+    st.session_state.run = False
