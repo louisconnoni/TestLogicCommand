@@ -63,4 +63,21 @@ def display_logic(nodes, level=0):
 data_file = st.file_uploader("Upload data file (.txt)", type="txt")
 logic_file = st.file_uploader("Upload logic file (.txt)", type="txt")
 
-if data_file_
+if data_file and logic_file:
+    try:
+        data_text = data_file.read().decode("utf-8")
+        logic_text = logic_file.read().decode("utf-8")
+
+        variables = parse_data(data_text)
+        logic_lines = logic_text.splitlines()
+        logic_tree = parse_logic(logic_lines)
+
+        st.subheader("Parsed Variables")
+        st.write(variables)
+
+        st.subheader("Parsed Logic Tree")
+        display_logic(logic_tree)
+
+    except Exception as e:
+        st.error("Parsing error")
+        st.code(str(e))
