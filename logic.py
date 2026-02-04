@@ -1,8 +1,18 @@
 import streamlit as st
 import operator
 
-st.set_page_config(page_title="Custom Logic Interpreter")
+# MUST be first Streamlit command
+st.set_page_config(page_title="Custom Logic Interpreter", layout="centered")
+
 st.title("Custom Logic Interpreter")
+
+# -------------------------
+# File uploaders (ALWAYS visible)
+# -------------------------
+data_file = st.file_uploader("Upload data file (.txt)", type="txt")
+logic_file = st.file_uploader("Upload logic file (.txt)", type="txt")
+
+run_button = st.button("Run Logic")
 
 # -------------------------
 # Parse data file
@@ -63,13 +73,20 @@ def display_logic(nodes, level=0):
 # -------------------------
 OPS = {
     "==": operator.eq,
-    ">": operator.gt,
-    "<": operator.lt,
     ">=": operator.ge,
     "<=": operator.le,
+    ">": operator.gt,
+    "<": operator.lt,
 }
 
-def evaluate_condition(text, variables):
-    for op_symbol, op_func in OPS.items():
-        if op_symbol in text:
-            left, right = text.spl
+def evaluate_condition(condition, variables):
+    for symbol, func in OPS.items():
+        if symbol in condition:
+            left, right = condition.split(symbol)
+            left = left.strip()
+            right = int(right.strip())
+            return func(variables.get(left), right)
+    raise ValueError(f"Invalid condition: {condition}")
+
+# -------------------------
+# Exec
