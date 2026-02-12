@@ -272,20 +272,20 @@ if st.session_state.run:
     st.session_state.run = False
 
 # Inject user input into interpreter variables
-            variables["aext"] = aext
-            logic_lines = logic_file.read().decode("utf-8").splitlines()
-            logic_tree = parse_logic(logic_lines)
+    variables["aext"] = aext
+    logic_lines = logic_file.read().decode("utf-8").splitlines()
+    logic_tree = parse_logic(logic_lines)
 
-            st.subheader("Parsed Variables")
-            st.write(variables)
+    st.subheader("Parsed Variables")
+    st.write(variables)
 
-            st.subheader("Interpreted Logic")
-            display_interpretation(logic_tree)
+    st.subheader("Interpreted Logic")
+    display_interpretation(logic_tree)
 
-            execute(logic_tree, variables)
+    execute(logic_tree, variables)
 
-            st.subheader("Final Variables After Execution")
-            st.success(variables)
+    st.subheader("Final Variables After Execution")
+    st.success(variables)
 
 
     # -------------------------
