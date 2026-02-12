@@ -161,25 +161,47 @@ def evaluate_condition(condition, variables):
 # Execute logic
 # -------------------------
 def execute(nodes, variables):
-    for node in nodes:
+    i = 0
+
+    while i < len(nodes):
+        node = nodes[i]
         text = node["text"]
 
+        # ---------------- IF ----------------
         if text.startswith("if "):
             condition = text[3:].strip()
+
             if evaluate_condition(condition, variables):
                 execute(node["children"], variables)
-                return True
 
+                # skip following else block
+                if i + 1 < len(nodes) and nodes[i+1]["text"].startswith("else"):
+                    i += 1
+
+            else:
+                # run else block if it exists
+                if i + 1 < len(nodes) and nodes[i+1]["text"].startswith("else"):
+                    execute(nodes[i+1]["children"], variables)
+                    i += 1
+
+        # ---------------- ELSE ----------------
         elif text.startswith("else"):
-            execute(node["children"], variables)
-            return True
+            # already handled by IF
+            pass
 
+        # ---------------- ASSIGNMENT ----------------
         elif "=" in text:
             var, val = text.split("=")
-            variables[var.strip()] = int(val.strip())
-            return True
+            var = var.strip()
+            val = val.strip()
 
-    return False
+            # allow assigning variables OR numbers
+            if val in variables:
+                variables[var] = variables[val]
+            else:
+                variables[var] = float(val)
+
+        i += 1
 
 # -------------------------
 # Decision output based on i
@@ -188,7 +210,7 @@ def heat_recovery_recommendation(variables):
     if "i" not in variables:
         return "No decision made (i not defined)."
 
-    i_value = variables["i"]
+    i_value = int(variables["i"])
 
     if i_value == 0:
         return "other heat waste recovery option"
