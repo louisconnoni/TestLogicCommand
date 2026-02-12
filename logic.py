@@ -296,8 +296,8 @@ recommendation = heat_recovery_recommendation(variables)
 st.subheader("Recommended Heat Waste Recovery Method")
 st.info(recommendation)
 
-    except Exception as e:
-        st.error("Error detected")
-        st.code(str(e))
+except Exception as e:
+    st.error("Error detected")
+    st.code(str(e))
 
     st.session_state.run = False
