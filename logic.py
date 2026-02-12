@@ -220,27 +220,27 @@ def heat_recovery_recommendation(variables):
         return f"Unknown option for i = {i_value}"
 
 # -------------------------
-# Run
-# -------------------------
 # -------------------------
 # Run
 # -------------------------
 if st.session_state.run:
     try:
+
         if not data_file or not logic_file:
             st.warning("Please upload both files.")
+
         else:
             # Parse data file
             variables = parse_data(data_file.read().decode("utf-8"))
 
-            # guarantee decision variable exists
+            # Guarantee decision variable exists
             if "i" not in variables:
                 variables["i"] = 0
 
-            # Inject environmental input
+            # Environmental input
             variables["aext"] = float(aext)
 
-            # Parse logic file
+            # Parse logic
             logic_lines = logic_file.read().decode("utf-8").splitlines()
             logic_lines = remove_comments(logic_lines)
             logic_tree = parse_logic(logic_lines)
@@ -251,50 +251,17 @@ if st.session_state.run:
             st.subheader("Interpreted Logic")
             display_interpretation(logic_tree)
 
-            # Execute interpreter
+            # Execute
             execute(logic_tree, variables)
 
             st.subheader("Final Variables After Execution")
             st.success(variables)
 
-            # -------------------------
-            # Recommendation (NOW SAFE)
-            # -------------------------
+            # Recommendation
             recommendation = heat_recovery_recommendation(variables)
 
             st.subheader("Recommended Heat Waste Recovery Method")
             st.info(recommendation)
-
-    except Exception as e:
-        st.error("Error detected")
-        st.code(str(e))
-
-    st.session_state.run = False
-
-# Inject user input into interpreter variables
-    variables["aext"] = aext
-    logic_lines = logic_file.read().decode("utf-8").splitlines()
-    logic_tree = parse_logic(logic_lines)
-
-    st.subheader("Parsed Variables")
-    st.write(variables)
-
-    st.subheader("Interpreted Logic")
-    display_interpretation(logic_tree)
-
-    execute(logic_tree, variables)
-
-    st.subheader("Final Variables After Execution")
-    st.success(variables)
-
-
-    # -------------------------
-# Show recommendation
-# -------------------------
-recommendation = heat_recovery_recommendation(variables)
-
-st.subheader("Recommended Heat Waste Recovery Method")
-st.info(recommendation)
 
     except Exception as e:
         st.error("Error detected")
